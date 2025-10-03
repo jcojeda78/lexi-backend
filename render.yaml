@@ -1,0 +1,37 @@
+yaml
+
+services:
+
+- type: web
+
+name: lexi-backend
+
+env: python
+
+buildCommand: pip install -r requirements.txt
+
+startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+
+envVars:
+
+- key: MONGO_URL
+
+sync: false
+
+- key: JWT_SECRET
+
+sync: false
+
+- key: DB_NAME
+
+value: lexi_production
+
+- key: ENVIRONMENT
+
+value: production
+
+- key: CORS_ORIGINS
+
+value: https://tu-frontend-url.vercel.app
+
+```
