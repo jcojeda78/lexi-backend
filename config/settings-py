@@ -1,0 +1,97 @@
+# 🔐 CONFIGURACIÓN DEL BACKEND - API KEYS Y TOKENS
+# =================================================
+
+import os
+from typing import Optional
+
+class Settings:
+    """Configuración centralizada del backend"""
+    
+    # 🔒 SEGURIDAD (REQUERIDO)
+    JWT_SECRET: str = os.environ.get('JWT_SECRET', 'cambiar-en-produccion-clave-super-secreta-32-caracteres')
+    JWT_ALGORITHM: str = 'HS256'
+    JWT_EXPIRATION_MINUTES: int = 60 * 24 * 7  # 7 días
+    
+    # 🗄️ BASE DE DATOS (REQUERIDO)
+    MONGO_URL: str = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+    DB_NAME: str = os.environ.get('DB_NAME', 'lexi_db')
+    
+    # 🌐 CORS (IMPORTANTE para producción)
+    CORS_ORIGINS: list = os.environ.get('CORS_ORIGINS', '*').split(',')
+    
+    # 📧 EMAIL SERVICE (OPCIONAL - para notificaciones)
+    # ⚠️ COLOCAR TUS API KEYS AQUÍ:
+    EMAIL_SERVICE: str = os.environ.get('EMAIL_SERVICE', 'none')  # "sendgrid", "mailgun", "ses", "none"
+    
+    # SendGrid
+    SENDGRID_API_KEY: Optional[str] = os.environ.get('SENDGRID_API_KEY')  # ← COLOCAR tu SendGrid key: "SG.xxxxx"
+    
+    # Mailgun  
+    MAILGUN_API_KEY: Optional[str] = os.environ.get('MAILGUN_API_KEY')    # ← COLOCAR tu Mailgun key
+    MAILGUN_DOMAIN: Optional[str] = os.environ.get('MAILGUN_DOMAIN')      # ← COLOCAR tu dominio
+    
+    # Configuración de emails
+    FROM_EMAIL: str = os.environ.get('FROM_EMAIL', 'noreply@tu-dominio.com')     # ← Tu email de envío
+    NOTIFY_EMAIL: str = os.environ.get('NOTIFY_EMAIL', 'admin@tu-dominio.com')   # ← Email para recibir notificaciones
+    
+    # 🔗 INTEGRACIONES EXTERNAS (OPCIONAL)
+    
+    # Facebook/Meta Ads API
+    FACEBOOK_APP_ID: Optional[str] = os.environ.get('FACEBOOK_APP_ID')           # ← COLOCAR tu App ID
+    FACEBOOK_APP_SECRET: Optional[str] = os.environ.get('FACEBOOK_APP_SECRET')   # ← COLOCAR tu App Secret
+    
+    # Stripe (Pagos)
+    STRIPE_SECRET_KEY: Optional[str] = os.environ.get('STRIPE_SECRET_KEY')       # ← COLOCAR tu Stripe Secret: "sk_test_xxxxx"
+    STRIPE_WEBHOOK_SECRET: Optional[str] = os.environ.get('STRIPE_WEBHOOK_SECRET') # ← COLOCAR tu Webhook Secret
+    
+    # Analytics
+    GOOGLE_ANALYTICS_ID: Optional[str] = os.environ.get('GOOGLE_ANALYTICS_ID')   # ← COLOCAR tu GA ID: "G-XXXXXXXXXX"
+    
+    # 🚀 AMBIENTE
+    ENVIRONMENT: str = os.environ.get('ENVIRONMENT', 'development')  # "development" o "production"
+    DEBUG: bool = ENVIRONMENT == 'development'
+    
+    # 📊 CONFIGURACIÓN DE LA APLICACIÓN
+    MAX_LEADS_PER_EMAIL: int = 5  # Máximo leads por email por día
+    MAX_CONTACT_MESSAGES_PER_IP: int = 10  # Máximo mensajes de contacto por IP por día
+
+# Instancia global de configuración
+settings = Settings()
+
+# 🔧 VALIDACIÓN DE CONFIGURACIÓN
+def validate_config():
+    """Valida que la configuración esté correcta"""
+    errors = []
+    
+    # Validar configuración requerida
+    if settings.JWT_SECRET == 'cambiar-en-produccion-clave-super-secreta-32-caracteres':
+        if settings.ENVIRONMENT == 'production':
+            errors.append("❌ JWT_SECRET debe cambiarse en producción")
+        else:
+            print("⚠️  JWT_SECRET usando valor por defecto (OK para desarrollo)")
+    
+    if not settings.MONGO_URL:
+        errors.append("❌ MONGO_URL es requerido")
+    
+    # Validar configuración de email si está habilitada
+    if settings.EMAIL_SERVICE == 'sendgrid' and not settings.SENDGRID_API_KEY:
+        errors.append("❌ SENDGRID_API_KEY es requerido para SendGrid")
+    
+    if settings.EMAIL_SERVICE == 'mailgun' and (not settings.MAILGUN_API_KEY or not settings.MAILGUN_DOMAIN):
+        errors.append("❌ MAILGUN_API_KEY y MAILGUN_DOMAIN son requeridos para Mailgun")
+    
+    # Mostrar configuración actual
+    print("🔧 CONFIGURACIÓN ACTUAL:")
+    print(f"   • Ambiente: {settings.ENVIRONMENT}")
+    print(f"   • Base de datos: {'✅ Configurada' if settings.MONGO_URL else '❌ No configurada'}")
+    print(f"   • Email service: {settings.EMAIL_SERVICE}")
+    print(f"   • CORS origins: {settings.CORS_ORIGINS}")
+    
+    if errors:
+        print("❌ ERRORES DE CONFIGURACIÓN:")
+        for error in errors:
+            print(f"   {error}")
+        if settings.ENVIRONMENT == 'production':
+            raise Exception("Configuración inválida para producción")
+    else:
+        print("✅ Configuración válida")
